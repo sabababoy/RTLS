@@ -6,9 +6,11 @@ class Vertex:
 	
 	def __init__(self):
 
-		self.connectedVerticesAndEdges = {} # {Connected Vertex: Edge}
+		self.distanceToVertices = {} # {Vertex index: distance}
+		self.connectedVerticesAndEdges = {} # {Connected vertex index: Edge index}
 		self.index = Vertex.quantity
 		Vertex.quantity += 1
+
 
 class Edge:
 
@@ -24,6 +26,7 @@ class Edge:
 		
 
 class Graph:
+
 	def __init__(self):
 		
 		self.listOfVertices = []
@@ -43,12 +46,46 @@ class Graph:
 				if connection:
 					connection = int(connection) - 1
 					if (connection not in self.listOfVertices[i].connectedVerticesAndEdges) and (connection != i):
-						distance = int(input('Distance: '))
+						distance = int(input('Distance: '))						
 						edge = Edge(self.listOfVertices[i], connection, distance)
 						self.listOfVertices[i].connectedVerticesAndEdges[connection] = edge
 						self.listOfVertices[connection].connectedVerticesAndEdges[i] = edge
 				else:
 					break
+
+		self.calculatingDistances()
+
+	def calculatingDistances(self): # Dijkstra's algorythm for all vertices. To rember distances from all vertices to all vertices
+
+		for vertex in self.listOfVertices:
+			self.dijkstra(vertex)
+
+	def dijkstra(self, vertex):
+
+		start = vertex.index
+		visited = []
+		weight = [1000000000] * Vertex.quantity
+		weight[start] = 0
+
+		for i in range(Vertex.quantity):
+
+			for v in self.listOfVertices[start].connectedVerticesAndEdges:
+				if v not in visited:
+					weight[self.listOfVertices[v].index] = weight[start] + self.listOfVertices[start].connectedVerticesAndEdges[v].weight
+					vertex.distanceToVertices[self.listOfVertices[v].index] = weight[start] + self.listOfVertices[start].connectedVerticesAndEdges[v].weight
+
+			visited.append(start)
+			m = 1000000000
+
+			for i in range(Vertex.quantity):
+				if (i not in visited) and (weight[i] < m):
+					start = i
+					m = weight[i]
+			
+
+
+
+
 
 
 
