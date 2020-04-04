@@ -7,7 +7,7 @@ class Vertex:
 	def __init__(self):
 
 		self.distanceToVertices = {} # {Vertex index: distance}
-		self.connectedVerticesAndEdges = {} # {Connected vertex index: Edge index}
+		self.connectedVerticesAndEdges = {} # {Connected vertex index: Edge}
 		self.index = Vertex.quantity
 		Vertex.quantity += 1
 
@@ -53,9 +53,9 @@ class Graph:
 				else:
 					break
 
-		self.calculatingDistances()
+		self.calculateDistances()
 
-	def calculatingDistances(self): # Dijkstra's algorythm for all vertices. To rember distances from all vertices to all vertices
+	def calculateDistances(self): # Dijkstra's algorithm for all vertices. To rember distances from all vertices to all vertices
 
 		for vertex in self.listOfVertices:
 			self.dijkstra(vertex)
@@ -71,8 +71,9 @@ class Graph:
 
 			for v in self.listOfVertices[start].connectedVerticesAndEdges:
 				if v not in visited:
-					weight[self.listOfVertices[v].index] = weight[start] + self.listOfVertices[start].connectedVerticesAndEdges[v].weight
-					vertex.distanceToVertices[self.listOfVertices[v].index] = weight[start] + self.listOfVertices[start].connectedVerticesAndEdges[v].weight
+					if weight[v] > weight[start] + self.listOfVertices[start].connectedVerticesAndEdges[v].weight:
+						weight[v] = weight[start] + self.listOfVertices[start].connectedVerticesAndEdges[v].weight
+						vertex.distanceToVertices[self.listOfVertices[v].index] = weight[start] + self.listOfVertices[start].connectedVerticesAndEdges[v].weight
 
 			visited.append(start)
 			m = 1000000000
@@ -82,12 +83,6 @@ class Graph:
 					start = i
 					m = weight[i]
 			
-
-
-
-
-
-
 
 if __name__ == '__main__':
 	print('It\'s just a module. Use it in your project to make graph.')
