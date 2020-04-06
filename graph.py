@@ -1,4 +1,8 @@
 from math import sqrt
+import rtls
+import sys
+
+sys.stdin = open('test.txt', 'r')
 
 class Vertex:
 
@@ -30,6 +34,7 @@ class Graph:
 	def __init__(self):
 		
 		self.listOfVertices = []
+		self.listOfEdges = []
 
 		quantityOfVertices = int(input('How many vertices in the graph? '))
 
@@ -48,6 +53,7 @@ class Graph:
 					if (connection not in self.listOfVertices[i].connectedVerticesAndEdges) and (connection != i):
 						distance = int(input('Distance: '))						
 						edge = Edge(self.listOfVertices[i], connection, distance)
+						self.listOfEdges.append(edge)
 						self.listOfVertices[i].connectedVerticesAndEdges[connection] = edge
 						self.listOfVertices[connection].connectedVerticesAndEdges[i] = edge
 				else:
@@ -66,6 +72,7 @@ class Graph:
 		visited = []
 		weight = [1000000000] * Vertex.quantity
 		weight[start] = 0
+		vertex.distanceToVertices[vertex.index] = 0
 
 		for i in range(Vertex.quantity):
 
@@ -82,7 +89,12 @@ class Graph:
 				if (i not in visited) and (weight[i] < m):
 					start = i
 					m = weight[i]
+
+	def findSecondVertexInEdge(self, vertex, edge):
+		for i in vertex.connectedVerticesAndEdges:
+			if vertex.connectedVerticesAndEdges[i] == edge:
+				return self.listOfVertices[i]
 			
 
 if __name__ == '__main__':
-	print('It\'s just a module. Use it in your project to make graph.')
+	print('It\'s just a module. Use it in your project to make graph.')	
