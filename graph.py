@@ -1,9 +1,3 @@
-from math import sqrt
-import rtls
-import sys
-
-sys.stdin = open('test.txt', 'r')
-
 class Vertex:
 
 	quantity = 0
@@ -66,7 +60,7 @@ class Graph:
 		for vertex in self.listOfVertices:
 			self.dijkstra(vertex)
 
-	def dijkstra(self, vertex):
+	def dijkstra(self, vertex): # Dikstra's algorithm - finding distances from vertex to all other vertices
 
 		start = vertex.index
 		visited = []

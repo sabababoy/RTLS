@@ -1,4 +1,4 @@
-""" 
+'''
 	There is no implementation of methods for sending and receiving a signal,
 since there is no hardware for implementing the calculation of the signal return time.
 We just imitate work.
@@ -7,7 +7,7 @@ the distance from them to the desired receivers (no more than n remote).
 The distance to the receiver and the receiver itself are calculated in the transmitter class method.
 
 In a real situation, the receivers themselves will calculate the distance to the transmitter based on the received signal.
-"""
+'''
 
 
 class Receiver:
@@ -18,18 +18,22 @@ class Receiver:
 	listOfReceivers = []
 	maxLenghtOfSignal = 0
 
-	def __init__(self, graph, vertex, maxLenghtOfSignal):
+	def __init__(self, graph, vertex):
 		self.index = Receiver.quantity
 		Receiver.quantity += 1
 		self.graph = graph
 		self.vertex = vertex
 		self.lastCalculatedCoordinates = []
 		self.lastTakenDistance = 0
-		Receiver.maxLenghtOfSignal = maxLenghtOfSignal
 		Receiver.listOfReceivers.append(self)
 	
-	def calculateCoordinates(self, transmitterIndex, distance): # Function that calculate coordinates to a miner. Takes the distance to a miner as an argument
-		#coordinates = (Distance from vertex, Vertex, Edge, TransmitterIndex)
+
+	'''
+	Function that calculate coordinates to a miner. Takes the distance rfom receiver to a miner as an argument.
+	'''
+	
+	def calculateCoordinates(self, transmitterIndex, distance):
+	
 		self.lastTakenDistance = distance
 		vertex = self.vertex
 		for i in vertex.distanceToVertices:
@@ -52,9 +56,13 @@ class Receiver:
 		for i in self.lastCalculatedCoordinates:
 			Receiver.calculatedCoordinates.append(i)
 
+	'''
+	Delete similar and unreal coordinates.
+	Such results may appear when there are two identical distances to the same point,
+	as well as if there is a shorter path to the found point
+	'''
+	def findDuplicates(self, listOfCoordinates): 
 
-	def findDuplicates(self, listOfCoordinates): # Delete similar and unreal coordinates
-		
 		duplicates = []
 
 		for coordinates in listOfCoordinates:
@@ -85,9 +93,15 @@ class Transmitter:
 		self.realCoordinates = coordinates
 		self.index = Transmitter.quantity
 		Transmitter.quantity += 1
-
+		
+	'''
+	result -> ditance to receiver from transmitter. 
+	In real life this distance is calculated on receivers. 
+	(by calculating from the speed of the signal and its return time).
+	'''
 
 	def findDistanceToReceiver(self, receiver):
+		
 		
 		distance = receiver.vertex.distanceToVertices[self.realCoordinates[1].index] + self.realCoordinates[0]
 		
@@ -99,7 +113,25 @@ class Transmitter:
 		return distance
 
 
+'''
+	The function of finding an approximate answer by removing impossible results and intersecting possible ones.
+Impossible results:
+The results received from all transmitters fall into the list of found answers, BUT they can contradict each other.
+Example:
+From receiver A, the path to point x is 100. From receiver B, it is 50. 
+The point can be removed from A by 100, and from B less by 50 and vice versa. 
+(For example, if the transmitters are at the vertices of one edge, the length is short 120. 
+In this case, both results are deleted, so it contradicts each other.)
+Thus, if there is a shorter path to the receiver from the point than the distance it has received, this point is deleted.
+
+If the distance from the point to the receiver is greater than the length of its signal, 
+this receiver does not participate in the dispute.
+
+Paths to points are calculated based on previously calculated distances to the vertices of the graph (dijkstra algorithm).
+'''
+
 def answer(graph):
+	
 	listOfCoordinates = Receiver.calculatedCoordinates
 	Receiver.answer = listOfCoordinates
 	for c in listOfCoordinates:
