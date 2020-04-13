@@ -24,7 +24,7 @@ class Receiver:
 		self.graph = graph
 		self.vertex = vertex
 		self.lastCalculatedCoordinates = []
-		self.lastTakenDistance = 0
+		self.lastTakenDistance = None
 		Receiver.listOfReceivers.append(self)
 	
 
@@ -33,28 +33,32 @@ class Receiver:
 	'''
 	
 	def calculateCoordinates(self, transmitterIndex, distance):
-	
+
+		self.lastCalculatedCoordinates = []
+
 		self.lastTakenDistance = distance
-		vertex = self.vertex
-		for i in vertex.distanceToVertices:
-			for x in self.graph.listOfVertices[i].connectedVerticesAndEdges:
-				if (vertex.distanceToVertices[i] - self.graph.listOfVertices[x].connectedVerticesAndEdges[i].weight != vertex.distanceToVertices[x] and
-					distance - self.vertex.distanceToVertices[i] >= 0 and
-					vertex.distanceToVertices[i] + self.graph.listOfVertices[i].connectedVerticesAndEdges[x].weight > distance and
-					vertex.distanceToVertices[x] + self.graph.listOfVertices[i].connectedVerticesAndEdges[x].weight - (distance - vertex.distanceToVertices[i]) >= distance):
 
-					self.lastCalculatedCoordinates.append((self.graph.listOfVertices[i].connectedVerticesAndEdges[x].weight - (vertex.distanceToVertices[i] + self.graph.listOfVertices[i].connectedVerticesAndEdges[x].weight - distance), 
-						self.graph.listOfVertices[i], 
-						self.graph.listOfVertices[i].connectedVerticesAndEdges[x], 
-						transmitterIndex))
-					
-					if self.graph.listOfVertices[i].connectedVerticesAndEdges[x].weight - (vertex.distanceToVertices[i] + self.graph.listOfVertices[i].connectedVerticesAndEdges[x].weight - distance) == 0:
-						break
+		if distance != None:
+			vertex = self.vertex
+			for i in vertex.distanceToVertices:
+				for x in self.graph.listOfVertices[i].connectedVerticesAndEdges:
+					if (vertex.distanceToVertices[i] - self.graph.listOfVertices[x].connectedVerticesAndEdges[i].weight != vertex.distanceToVertices[x] and
+						distance - self.vertex.distanceToVertices[i] >= 0 and
+						vertex.distanceToVertices[i] + self.graph.listOfVertices[i].connectedVerticesAndEdges[x].weight > distance and
+						vertex.distanceToVertices[x] + self.graph.listOfVertices[i].connectedVerticesAndEdges[x].weight - (distance - vertex.distanceToVertices[i]) >= distance):
 
-		self.deleteDuplicates(self.findDuplicates(self.lastCalculatedCoordinates), self.lastCalculatedCoordinates)
+						self.lastCalculatedCoordinates.append((self.graph.listOfVertices[i].connectedVerticesAndEdges[x].weight - (vertex.distanceToVertices[i] + self.graph.listOfVertices[i].connectedVerticesAndEdges[x].weight - distance), 
+							self.graph.listOfVertices[i], 
+							self.graph.listOfVertices[i].connectedVerticesAndEdges[x], 
+							transmitterIndex))
+						
+						if self.graph.listOfVertices[i].connectedVerticesAndEdges[x].weight - (vertex.distanceToVertices[i] + self.graph.listOfVertices[i].connectedVerticesAndEdges[x].weight - distance) == 0:
+							break
 
-		for i in self.lastCalculatedCoordinates:
-			Receiver.calculatedCoordinates.append(i)
+			self.deleteDuplicates(self.findDuplicates(self.lastCalculatedCoordinates), self.lastCalculatedCoordinates)
+
+			for i in self.lastCalculatedCoordinates:
+				Receiver.calculatedCoordinates.append(i)
 
 	'''
 	Delete similar and unreal coordinates.
@@ -112,6 +116,12 @@ class Transmitter:
 
 		return distance
 
+	def sendDistances(self):
+		for i in Receiver.listOfReceivers:
+			if self.findDistanceToReceiver(i) <= Receiver.maxLenghtOfSignal:
+				i.calculateCoordinates(self.index, self.findDistanceToReceiver(i))
+			else:
+				i.calculateCoordinates(self.index, None)
 
 '''
 	The function of finding an approximate answer by removing impossible results and intersecting possible ones.
@@ -131,57 +141,58 @@ Paths to points are calculated based on previously calculated distances to the v
 '''
 
 def answer(graph):
-	
-	listOfCoordinates = Receiver.calculatedCoordinates
-	Receiver.answer = listOfCoordinates
-	for c in listOfCoordinates:
-		distance, vertex, edge, tr = c
-		if c in Receiver.answer:
-			for i in listOfCoordinates:
-				newDistance, newVertex, newEdge, tr = i
-				if (edge == newEdge) and (distance != edge.weight - newDistance) and i != c:
-					Receiver.answer.pop(Receiver.answer.index(c))
-					Receiver.answer.pop(Receiver.answer.index(i))
 
-	
-	deadList = []
+	Receiver.answer = Receiver.calculatedCoordinates
 
-	for coordinates in Receiver.answer:
-		if Receiver.answer.index(coordinates) not in deadList:
-			newDistance = (coordinates[2].weight - coordinates[0])
-			newVertex = graph.findSecondVertexInEdge(coordinates[1], coordinates[2])
-			newCoordinates = (newDistance, newVertex, coordinates[2], coordinates[3])
-			try:
-				deadList.append(Receiver.answer.index(newCoordinates))
-			except:
-				pass
+	# Unreal results deleting
+	while True:
+		deadList = []
+		for receiver in Receiver.listOfReceivers:
+			if receiver.lastTakenDistance:
+				for coordinates in Receiver.answer:
+					if coordinates not in deadList:
+						firstWay = graph.listOfVertices[receiver.vertex.index].distanceToVertices[coordinates[1].index] + coordinates[0]
+						secondWay = graph.listOfVertices[receiver.vertex.index].distanceToVertices[graph.findSecondVertexInEdge(coordinates[1], coordinates[2]).index] + coordinates[2].weight - coordinates[0]
 
-	for i in deadList:
-		Receiver.answer.pop(i)
+						if firstWay > secondWay:
+							firstWay, secondWay = secondWay, firstWay
 
-	deadList = []
+						if firstWay != receiver.lastTakenDistance:
+							deadList.append(coordinates)
 
-	for receiver in Receiver.listOfReceivers:
-		for coordinates in Receiver.answer:
-			firstWay = receiver.vertex.distanceToVertices[coordinates[1].index] + coordinates[0]
-			secondWay = receiver.vertex.distanceToVertices[graph.findSecondVertexInEdge(coordinates[1], coordinates[2]).index] + coordinates[2].weight - coordinates[0]
-			if (firstWay < receiver.lastTakenDistance or secondWay < receiver.lastTakenDistance):
-				deadList.append(Receiver.answer.index(coordinates))
+		if deadList == []: break
 
-	for i in deadList:
-		Receiver.answer.pop(i)
 
-	deadList = []
+		for i in deadList:
+			Receiver.answer.pop(Receiver.answer.index(i))
 
-	for receiver in Receiver.listOfReceivers:
-		for coordinates in Receiver.answer:
-			firstWay = receiver.vertex.distanceToVertices[coordinates[1].index] + coordinates[0]
-			secondWay = receiver.vertex.distanceToVertices[graph.findSecondVertexInEdge(coordinates[1], coordinates[2]).index] + coordinates[2].weight - coordinates[0]
-			if ((firstWay > receiver.lastTakenDistance and firstWay < Receiver.maxLenghtOfSignal) and
-				secondWay > receiver.lastTakenDistance and secondWay < Receiver.maxLenghtOfSignal):
-				deadList.append(Receiver.answer.index(coordinates))
 
-	for i in deadList:
-		Receiver.answer.pop(i)
+	# Error Removal
+	while True:
+		deadList = []
+		for i in Receiver.answer:
+			if i not in deadList:
+				for c in Receiver.answer:
+					if c not in deadList and i != c:
+						if i[2] == c[2]:
+							if i[1] == c[1]:
+								if -5 < i[0] - c[0] <= 5:
+									deadList.append(c)
+							else:
+								if (i[2].weight - i[0] - c[0]) <= 5:
+									deadList.append(c)
+
+		if deadList == []: break
+
+		for i in deadList:
+			Receiver.answer.pop(Receiver.answer.index(i))
+
+	answer = Receiver.answer
+	Receiver.calculatedCoordinates = []
+	Receiver.answer = []
+
+	return answer
+
+
 
 

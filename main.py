@@ -5,15 +5,23 @@ import threading
 import time
 import sys
 
+_in = sys.stdin
+_out = sys.stdout
 sys.stdin = open('test.txt', 'r')
+
+if sys.stdin != _in:
+	sys.stdout = open('trash.txt', 'w+')
 
 g = graph.Graph()
 
-rtls.Receiver.maxLenghtOfSignal = 100
+if sys.stdin != _in:
+	sys.stdout = _out
+
+rtls.Receiver.maxLenghtOfSignal = 200
 
 r = rtls.Receiver(g, g.listOfVertices[0])
-r2 = rtls.Receiver(g, g.listOfVertices[3])
-r3 = rtls.Receiver(g, g.listOfVertices[0])
+r2 = rtls.Receiver(g, g.listOfVertices[2])
+r3 = rtls.Receiver(g, g.listOfVertices[9])
 tr = rtls.Transmitter((0, g.listOfVertices[0], g.listOfEdges[0]), g)
 
 mainer = imitation.Miner(tr)
@@ -24,27 +32,25 @@ thr.start()
 while True:
 	time.sleep(2)
 
-	d1 = tr.findDistanceToReceiver(r)
-	d2 = tr.findDistanceToReceiver(r2)
-	d3 = tr.findDistanceToReceiver(r3)
+	tr.sendDistances()
 
-	r.calculateCoordinates(tr.index, d1)
-	r2.calculateCoordinates(tr.index, d2)
-	r3.calculateCoordinates(tr.index, d3)
-
-	rtls.answer(g)
-	for i in rtls.Receiver.answer:
-		print('Найденная координата:\n')
+	answer = rtls.answer(g)
+	for i in answer:
+		print('@@@ Find:')
 		a, b, c, d = i
 		print('distance -> {}'.format(a))
 		print('vertex -> {}'.format(b.index))
 		print('edge -> {}'.format(c.index))
-		print('rID -> {}'.format(d))
+		print('rID -> {}\n'.format(d))
 
-	print('Настойщие коордтнаты:\n')
+	print('@@@ Real Coordinates:')
 	a, b, c = tr.realCoordinates
 	print('distance -> {}'.format(a))
 	print('vertex -> {}'.format(b.index))
 	print('edge -> {}'.format(c.index))
+	print('--------or---------')
+	print('distance -> {}'.format(c.weight - a))
+	print('vertex -> {}'.format(g.findSecondVertexInEdge(b, c).index))
+	print('edge -> {}\n\n\n'.format(c.index))
 
 

@@ -19,11 +19,21 @@ class Miner():
 			if self.coordinates[0] >= self.coordinates[2].weight:
 				self.coordinates[0] = self.coordinates[0] - self.coordinates[2].weight
 				self.coordinates[1] = self.transmitter.graph.findSecondVertexInEdge(self.coordinates[1], self.coordinates[2])
-				number = len(self.coordinates[1].connectedVerticesAndEdges)
-				if number != 1:
-					self.coordinates[2] = self.coordinates[1].connectedVerticesAndEdges[random.randint(0, number - 1)]
-				else:
-					self.coordinates[2] = self.coordinates[1].connectedVerticesAndEdges[random.randint(0, number)]
+				number = random.randint(0,len(self.coordinates[1].connectedVerticesAndEdges) - 1)
+
+				i = 0
+				newWay = None
+
+				for key in self.coordinates[1].connectedVerticesAndEdges:
+					if i == number:
+						newWay = key
+						break
+					
+					i += 1
+				
+				self.coordinates[2] = self.coordinates[1].connectedVerticesAndEdges[newWay]
+				
+
 			self.transmitter.realCoordinates = (self.coordinates[0], self.coordinates[1], self.coordinates[2])
 
 	def stop_walking(self):
